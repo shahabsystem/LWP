@@ -1,23 +1,344 @@
 package com.shahabsystem.livewebwallpaper;
 
-import android.graphics.*;import android.os.*;import android.service.wallpaper.WallpaperService;import android.view.*;import android.webkit.*;import java.util.*;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Typeface;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.SystemClock;
+import android.service.wallpaper.WallpaperService;
+import android.view.SurfaceHolder;
+import android.view.View;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+
+import java.util.Random;
 
 public class LiveWallpaperService extends WallpaperService {
- @Override public Engine onCreateEngine(){return new E();}
- final class E extends Engine{
-  final Handler h=new Handler(Looper.getMainLooper()); WebView web; Paint p=new Paint(Paint.ANTI_ALIAS_FLAG); Random rnd=new Random(); float[] drops; int cols; boolean vis=false, ready=false; long last=0; int codeLine=0,codePos=0; final String[] lines={"// LIVE CODE","const wallpaper = {","  mode: \"creative\",","  battery: \"optimized\",","  render() {","    animate();","    updateDisplay();","  },","  status: \"online\"","};","// building something new..."};
-  final Runnable frame=()->{if(!vis||!ready)return; draw();h.postDelayed(frame,16);};
-  @Override public void onSurfaceCreated(SurfaceHolder sh){super.onSurfaceCreated(sh);ready=true; init(sh);}
-  @Override public void onSurfaceChanged(SurfaceHolder sh,int f,int w,int ht){super.onSurfaceChanged(sh,f,w,ht); if(web!=null){web.measure(View.MeasureSpec.makeMeasureSpec(w,1073741824),View.MeasureSpec.makeMeasureSpec(ht,1073741824));web.layout(0,0,w,ht);} initDrops(w,ht);}
-  @Override public void onVisibilityChanged(boolean v){vis=v;if(v){h.removeCallbacks(frame);h.post(frame);}else h.removeCallbacks(frame);}
-  @Override public void onSurfaceDestroyed(SurfaceHolder sh){ready=false;vis=false;h.removeCallbacks(frame);destroyWeb();super.onSurfaceDestroyed(sh);}
-  void init(SurfaceHolder sh){int w=sh.getSurfaceFrame().width(),ht=sh.getSurfaceFrame().height();initDrops(w,ht); if(Prefs.mode(this)==0)createWeb(sh,w,ht);}
-  void initDrops(int w,int ht){int fs=Math.max(14,Math.min(22,w/55));cols=Math.max(1,(w/fs)+1);drops=new float[cols];for(int i=0;i<cols;i++)drops[i]=-rnd.nextInt(Math.max(10,ht/fs));}
-  void createWeb(SurfaceHolder sh,int w,int ht){if(web!=null)return;web=new WebView(LiveWallpaperService.this);web.setLayerType(View.LAYER_TYPE_HARDWARE,null);WebSettings s=web.getSettings();s.setJavaScriptEnabled(true);s.setDomStorageEnabled(true);s.setDatabaseEnabled(false);s.setMediaPlaybackRequiresUserGesture(false);s.setLoadsImagesAutomatically(true);s.setBuiltInZoomControls(false);s.setDisplayZoomControls(false);s.setSupportZoom(false);s.setUseWideViewPort(true);s.setLoadWithOverviewMode(false);s.setOffscreenPreRaster(true);web.setBackgroundColor(Prefs.bg(this));web.setVerticalScrollBarEnabled(!Prefs.hideScroll(this));web.setHorizontalScrollBarEnabled(!Prefs.hideScroll(this));web.setOverScrollMode(View.OVER_SCROLL_NEVER);web.setWebViewClient(new WebViewClient(){@Override public void onPageFinished(WebView v,String u){v.setInitialScale((int)(Prefs.zoom(LiveWallpaperService.this)*100));v.invalidate();}});web.measure(View.MeasureSpec.makeMeasureSpec(w,1073741824),View.MeasureSpec.makeMeasureSpec(ht,1073741824));web.layout(0,0,w,ht);web.loadUrl(Prefs.url(this));}
-  void destroyWeb(){if(web!=null){web.stopLoading();web.loadUrl("about:blank");web.destroy();web=null;}}
-  void draw(){SurfaceHolder sh=getSurfaceHolder();Canvas c=null;try{c=sh.lockCanvas();if(c==null)return;int bg=Prefs.bg(this);c.drawColor(bg);int m=Prefs.mode(this);if(m==0)drawWeb(c);else if(m==1)drawMatrix(c);else drawCode(c);int d=Prefs.dim(this);if(d>0){p.setColor(Color.argb(d*255/100,0,0,0));c.drawRect(0,0,c.getWidth(),c.getHeight(),p);}}finally{if(c!=null)sh.unlockCanvasAndPost(c);}}
-  void drawWeb(Canvas c){if(web==null){createWeb(getSurfaceHolder(),c.getWidth(),c.getHeight());return;}web.measure(View.MeasureSpec.makeMeasureSpec(c.getWidth(),1073741824),View.MeasureSpec.makeMeasureSpec(c.getHeight(),1073741824));web.layout(0,0,c.getWidth(),c.getHeight());web.invalidate();web.draw(c);}
-  void drawMatrix(Canvas c){int w=c.getWidth(),ht=c.getHeight(),fs=Math.max(14,Math.min(22,w/55));p.setTypeface(Typeface.MONOSPACE);p.setTextSize(fs);int a=Prefs.accent(this);p.setColor(a);p.setShadowLayer(7,a,0);long now=SystemClock.uptimeMillis();if(last==0)last=now;float dt=Math.min(50,now-last)/16f;last=now;float speed=.25f+Prefs.speed(this)/100f*1.9f;for(int i=0;i<cols;i++){float y=drops[i]*fs;int alpha=(int)(130+rnd.nextInt(110));p.setAlpha(alpha);String s=(rnd.nextBoolean()?"0":"1");if(rnd.nextInt(8)==0)s="<>/{}[]$#@".substring(rnd.nextInt(10),rnd.nextInt(10)+1);c.drawText(s,i*fs,y,p);drops[i]+=speed*dt;if(y>ht+fs*20&&rnd.nextFloat()>.96)drops[i]=-rnd.nextInt(30);}p.clearShadowLayer();p.setAlpha(255);}
-  void drawCode(Canvas c){int w=c.getWidth(),ht=c.getHeight();float scale=Math.max(.75f,Math.min(1.25f,w/700f));float left=w*.04f,top=ht*.14f,ww=w*.92f,hh=ht*.72f;p.setStyle(Paint.Style.FILL);p.setColor(Color.argb(190,8,10,12));c.drawRoundRect(left,top,left+ww,top+hh,18,18,p);p.setStyle(Paint.Style.STROKE);p.setColor(Color.argb(60,255,255,255));c.drawRoundRect(left,top,left+ww,top+hh,18,18,p);p.setStyle(Paint.Style.FILL);p.setColor(Color.argb(70,255,255,255));c.drawRect(left,top+46,left+ww,top+47,p);for(int i=0;i<3;i++){p.setColor(Color.rgb(85,85,85));c.drawCircle(left+18+i*16,top+23,4,p);}p.setTypeface(Typeface.MONOSPACE);p.setTextSize(13*scale);int color=Prefs.accent(this);int lineH=(int)(25*scale);int maxLines=Math.max(1,(int)((hh-100)/lineH));StringBuilder shown=new StringBuilder();for(int i=0;i<codeLine&&i<lines.length;i++)shown.append(lines[i]).append('\n');if(codeLine<lines.length)shown.append(lines[codeLine].substring(0,Math.min(codePos,lines[codeLine].length())));String[] ss=shown.toString().split("\\n",-1);p.setColor(Color.rgb(62,62,62));for(int i=0;i<Math.min(maxLines,ss.length);i++)c.drawText(String.valueOf(i+1),left+12,top+75+i*lineH,p);p.setColor(Color.argb(210,200,200,200));float tx=left+60;for(int i=0;i<Math.min(maxLines,ss.length);i++){String s=ss[i];p.setColor(Color.argb(220,150,150,150));c.drawText(s,tx,top+75+i*lineH,p);}p.setColor(color);c.drawText("● LIVE",left+14,top+hh-14,p);p.setColor(Color.rgb(80,80,80));c.drawText("UTF-8",left+ww-55,top+hh-14,p);if(SystemClock.uptimeMillis()%1000<600){if(codeLine<lines.length){if(codePos<lines[codeLine].length())codePos++;else if(codeLine<lines.length-1){codeLine++;codePos=0;}}else{codeLine=0;codePos=0;}}}
- }
+
+    @Override
+    public Engine onCreateEngine() {
+        return new WallpaperEngine();
+    }
+
+    private final class WallpaperEngine extends Engine {
+
+        private final Handler handler = new Handler(Looper.getMainLooper());
+        private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Random random = new Random();
+
+        private WebView webView;
+        private boolean visible;
+        private boolean surfaceReady;
+        private float[] matrixDrops = new float[0];
+        private int matrixColumns;
+        private long lastFrameTime;
+        private int codeLine;
+        private int codePosition;
+
+        private final String[] codeLines = {
+                "// LIVE CODE",
+                "const wallpaper = {",
+                "  mode: \"creative\",",
+                "  battery: \"optimized\",",
+                "  render() {",
+                "    animate();",
+                "    updateDisplay();",
+                "  },",
+                "  status: \"online\"",
+                "};",
+                "// building something new..."
+        };
+
+        private final Runnable frameRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (!visible || !surfaceReady) {
+                    return;
+                }
+                drawFrame();
+                handler.postDelayed(this, 16L);
+            }
+        };
+
+        private android.content.Context context() {
+            return LiveWallpaperService.this;
+        }
+
+        @Override
+        public void onSurfaceCreated(SurfaceHolder holder) {
+            super.onSurfaceCreated(holder);
+            surfaceReady = true;
+            SurfaceHolder h = getSurfaceHolder();
+            int width = h.getSurfaceFrame().width();
+            int height = h.getSurfaceFrame().height();
+            initMatrix(width, height);
+            if (Prefs.mode(context()) == 0) {
+                createWebView(width, height);
+            }
+        }
+
+        @Override
+        public void onSurfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+            super.onSurfaceChanged(holder, format, width, height);
+            initMatrix(width, height);
+            layoutWebView(width, height);
+        }
+
+        @Override
+        public void onVisibilityChanged(boolean isVisible) {
+            visible = isVisible;
+            if (isVisible) {
+                lastFrameTime = SystemClock.uptimeMillis();
+                handler.removeCallbacks(frameRunnable);
+                handler.post(frameRunnable);
+            } else {
+                handler.removeCallbacks(frameRunnable);
+            }
+        }
+
+        @Override
+        public void onSurfaceDestroyed(SurfaceHolder holder) {
+            visible = false;
+            surfaceReady = false;
+            handler.removeCallbacks(frameRunnable);
+            destroyWebView();
+            super.onSurfaceDestroyed(holder);
+        }
+
+        private void initMatrix(int width, int height) {
+            int fontSize = Math.max(14, Math.min(22, width / 55));
+            matrixColumns = Math.max(1, width / fontSize + 1);
+            matrixDrops = new float[matrixColumns];
+            for (int i = 0; i < matrixColumns; i++) {
+                matrixDrops[i] = -random.nextInt(Math.max(10, height / fontSize));
+            }
+        }
+
+        private void createWebView(int width, int height) {
+            if (webView != null) {
+                return;
+            }
+
+            webView = new WebView(context());
+            webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+
+            WebSettings settings = webView.getSettings();
+            settings.setJavaScriptEnabled(true);
+            settings.setDomStorageEnabled(true);
+            settings.setLoadsImagesAutomatically(true);
+            settings.setMediaPlaybackRequiresUserGesture(false);
+            settings.setBuiltInZoomControls(false);
+            settings.setDisplayZoomControls(false);
+            settings.setSupportZoom(false);
+            settings.setUseWideViewPort(true);
+            settings.setLoadWithOverviewMode(false);
+            settings.setOffscreenPreRaster(true);
+
+            webView.setBackgroundColor(Prefs.bg(context()));
+            webView.setVerticalScrollBarEnabled(!Prefs.hideScroll(context()));
+            webView.setHorizontalScrollBarEnabled(!Prefs.hideScroll(context()));
+            webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
+
+            webView.setWebViewClient(new WebViewClient() {
+                @Override
+                public void onPageFinished(WebView view, String url) {
+                    view.setInitialScale((int) (Prefs.zoom(context()) * 100f));
+                    view.invalidate();
+                }
+            });
+
+            layoutWebView(width, height);
+            webView.loadUrl(Prefs.url(context()));
+        }
+
+        private void layoutWebView(int width, int height) {
+            if (webView == null) {
+                return;
+            }
+            webView.measure(
+                    View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY)
+            );
+            webView.layout(0, 0, width, height);
+        }
+
+        private void destroyWebView() {
+            if (webView == null) {
+                return;
+            }
+            webView.stopLoading();
+            webView.loadUrl("about:blank");
+            webView.destroy();
+            webView = null;
+        }
+
+        private void drawFrame() {
+            SurfaceHolder holder = getSurfaceHolder();
+            Canvas canvas = null;
+            try {
+                canvas = holder.lockCanvas();
+                if (canvas == null) {
+                    return;
+                }
+
+                canvas.drawColor(Prefs.bg(context()));
+
+                int mode = Prefs.mode(context());
+                if (mode == 0) {
+                    drawWeb(canvas);
+                } else if (mode == 1) {
+                    drawMatrix(canvas);
+                } else {
+                    drawCode(canvas);
+                }
+
+                int dim = Prefs.dim(context());
+                if (dim > 0) {
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor(Color.argb(dim * 255 / 100, 0, 0, 0));
+                    canvas.drawRect(0, 0, canvas.getWidth(), canvas.getHeight(), paint);
+                }
+            } finally {
+                if (canvas != null) {
+                    holder.unlockCanvasAndPost(canvas);
+                }
+            }
+        }
+
+        private void drawWeb(Canvas canvas) {
+            if (webView == null) {
+                createWebView(canvas.getWidth(), canvas.getHeight());
+                return;
+            }
+            layoutWebView(canvas.getWidth(), canvas.getHeight());
+            webView.invalidate();
+            webView.draw(canvas);
+        }
+
+        private void drawMatrix(Canvas canvas) {
+            int width = canvas.getWidth();
+            int height = canvas.getHeight();
+            int fontSize = Math.max(14, Math.min(22, width / 55));
+
+            paint.setStyle(Paint.Style.FILL);
+            paint.setTypeface(Typeface.MONOSPACE);
+            paint.setTextSize(fontSize);
+            int accent = Prefs.accent(context());
+            paint.setColor(accent);
+            paint.setShadowLayer(7f, 0f, 0f, accent);
+
+            long now = SystemClock.uptimeMillis();
+            if (lastFrameTime == 0L) {
+                lastFrameTime = now;
+            }
+            float delta = Math.min(50L, now - lastFrameTime) / 16f;
+            lastFrameTime = now;
+
+            float speed = 0.25f + (Prefs.speed(context()) / 100f) * 1.9f;
+
+            for (int i = 0; i < matrixColumns; i++) {
+                float y = matrixDrops[i] * fontSize;
+                paint.setAlpha(130 + random.nextInt(110));
+
+                String character;
+                int type = random.nextInt(10);
+                if (type < 8) {
+                    character = random.nextBoolean() ? "0" : "1";
+                } else {
+                    String symbols = "<>/{}[]$#@";
+                    character = String.valueOf(symbols.charAt(random.nextInt(symbols.length())));
+                }
+
+                canvas.drawText(character, i * fontSize, y, paint);
+                matrixDrops[i] += speed * delta;
+
+                if (y > height + fontSize * 20f && random.nextFloat() > 0.96f) {
+                    matrixDrops[i] = -random.nextInt(30);
+                }
+            }
+
+            paint.clearShadowLayer();
+            paint.setAlpha(255);
+        }
+
+        private void drawCode(Canvas canvas) {
+            int width = canvas.getWidth();
+            int height = canvas.getHeight();
+            float scale = Math.max(0.75f, Math.min(1.25f, width / 700f));
+            float left = width * 0.04f;
+            float top = height * 0.14f;
+            float panelWidth = width * 0.92f;
+            float panelHeight = height * 0.72f;
+
+            paint.setStyle(Paint.Style.FILL);
+            paint.setColor(Color.argb(190, 8, 10, 12));
+            canvas.drawRoundRect(left, top, left + panelWidth, top + panelHeight, 18f, 18f, paint);
+
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setColor(Color.argb(60, 255, 255, 255));
+            canvas.drawRoundRect(left, top, left + panelWidth, top + panelHeight, 18f, 18f, paint);
+            paint.setStyle(Paint.Style.FILL);
+
+            paint.setColor(Color.argb(70, 255, 255, 255));
+            canvas.drawRect(left, top + 46f, left + panelWidth, top + 47f, paint);
+
+            paint.setColor(Color.rgb(85, 85, 85));
+            for (int i = 0; i < 3; i++) {
+                canvas.drawCircle(left + 18f + i * 16f, top + 23f, 4f, paint);
+            }
+
+            paint.setTypeface(Typeface.MONOSPACE);
+            paint.setTextSize(13f * scale);
+            int lineHeight = (int) (25f * scale);
+            int maxLines = Math.max(1, (int) ((panelHeight - 100f) / lineHeight));
+
+            StringBuilder shown = new StringBuilder();
+            for (int i = 0; i < codeLine && i < codeLines.length; i++) {
+                shown.append(codeLines[i]).append('\n');
+            }
+            if (codeLine < codeLines.length) {
+                shown.append(codeLines[codeLine], 0, Math.min(codePosition, codeLines[codeLine].length()));
+            }
+
+            String[] visibleLines = shown.toString().split("\\n", -1);
+            float textX = left + 60f;
+
+            paint.setColor(Color.rgb(62, 62, 62));
+            for (int i = 0; i < Math.min(maxLines, visibleLines.length); i++) {
+                canvas.drawText(String.valueOf(i + 1), left + 12f, top + 75f + i * lineHeight, paint);
+            }
+
+            paint.setColor(Color.argb(220, 200, 200, 200));
+            for (int i = 0; i < Math.min(maxLines, visibleLines.length); i++) {
+                canvas.drawText(visibleLines[i], textX, top + 75f + i * lineHeight, paint);
+            }
+
+            paint.setColor(Prefs.accent(context()));
+            canvas.drawText("● LIVE", left + 14f, top + panelHeight - 14f, paint);
+
+            paint.setColor(Color.rgb(80, 80, 80));
+            canvas.drawText("UTF-8", left + panelWidth - 55f, top + panelHeight - 14f, paint);
+
+            // سرعت تایپ واقعی: بر اساس تنظیم کاربر، نه یک تایمر ثابت.
+            long interval = Math.max(18L, 150L - Prefs.codeSpeed(context()) * 1.3L);
+            long now = SystemClock.uptimeMillis();
+            if (now - lastFrameTime >= interval) {
+                lastFrameTime = now;
+                if (codeLine < codeLines.length) {
+                    if (codePosition < codeLines[codeLine].length()) {
+                        codePosition++;
+                    } else if (codeLine < codeLines.length - 1) {
+                        codeLine++;
+                        codePosition = 0;
+                    } else {
+                        codeLine = 0;
+                        codePosition = 0;
+                    }
+                }
+            }
+        }
+    }
 }
