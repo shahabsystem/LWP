@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">Live Web Wallpaper</string>
+    <string name="app_name">LiveWebWallpaper</string>
+    <string name="wallpaper_desc">وب، ماتریکس و کد به‌عنوان پس‌زمینه زنده</string>
 </resources>

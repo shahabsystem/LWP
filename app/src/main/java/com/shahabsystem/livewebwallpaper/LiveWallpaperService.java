@@ -7,60 +7,25 @@ import android.view.*;
 import android.webkit.*;
 
 public class LiveWallpaperService extends WallpaperService {
-    @Override public Engine onCreateEngine(){ return new EngineImpl(); }
-
+    @Override public Engine onCreateEngine(){return new EngineImpl();}
     class EngineImpl extends Engine {
-        final Handler h=new Handler(Looper.getMainLooper());
-        WebView web; SurfaceHolder holder; boolean visible;
-        final Runnable tick=()->{ if(visible){ drawOverlay(); h.postDelayed(tick, 1000); }};
-
-        @Override public void onVisibilityChanged(boolean v){ visible=v; if(v){h.post(tick);}else{h.removeCallbacks(tick);} }
-        @Override public void onSurfaceCreated(SurfaceHolder sh){super.onSurfaceCreated(sh);holder=sh; setup();}
-        @Override public void onSurfaceChanged(SurfaceHolder sh,int f,int w,int he){holder=sh; if(web!=null) web.layout(0,0,w,he);}
+        final Handler h=new Handler(Looper.getMainLooper());WebView web;SurfaceHolder holder;boolean visible;long frame=0;
+        final Runnable tick=()->{if(visible){drawFrame();schedule();}};
+        void schedule(){int m=Prefs.mode(LiveWallpaperService.this),speed=m==1?Prefs.matrixSpeed(LiveWallpaperService.this):Prefs.codeSpeed(LiveWallpaperService.this);h.postDelayed(tick,Math.max(45,720-speed*6L));}
+        @Override public void onVisibilityChanged(boolean v){visible=v;if(v)h.post(tick);else h.removeCallbacks(tick);}
+        @Override public void onSurfaceCreated(SurfaceHolder sh){super.onSurfaceCreated(sh);holder=sh;if(Prefs.mode(LiveWallpaperService.this)==0)setupWeb();else h.post(tick);}
+        @Override public void onSurfaceChanged(SurfaceHolder sh,int f,int w,int he){holder=sh;if(web!=null){web.measure(View.MeasureSpec.makeMeasureSpec(w,1073741824),View.MeasureSpec.makeMeasureSpec(he,1073741824));web.layout(0,0,w,he);}}
         @Override public void onSurfaceDestroyed(SurfaceHolder sh){visible=false;h.removeCallbacksAndMessages(null);if(web!=null){web.stopLoading();web.destroy();web=null;}super.onSurfaceDestroyed(sh);}
-
-        void setup(){
-            int mode=Prefs.mode(LiveWallpaperService.this);
-            if(mode==0) setupWeb(); else { web=null; h.post(tick); }
-        }
         void setupWeb(){
-            web=new WebView(LiveWallpaperService.this);
-            web.setBackgroundColor(Prefs.bg(LiveWallpaperService.this));
-            web.setLayerType(View.LAYER_TYPE_HARDWARE,null);
-            WebSettings s=web.getSettings(); s.setJavaScriptEnabled(true); s.setDomStorageEnabled(true);
-            s.setLoadsImagesAutomatically(true); s.setMediaPlaybackRequiresUserGesture(true);
-            s.setBuiltInZoomControls(false); s.setDisplayZoomControls(false);
-            web.setInitialScale((int)(Prefs.zoom(LiveWallpaperService.this)*100));
-            web.setWebViewClient(new WebViewClient());
-            web.loadUrl(Prefs.url(LiveWallpaperService.this));
-            int w=holder.getSurfaceFrame().width(), he=holder.getSurfaceFrame().height();
-            web.measure(View.MeasureSpec.makeMeasureSpec(w,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(he,View.MeasureSpec.EXACTLY));
-            web.layout(0,0,w,he);
+            web=new WebView(LiveWebWallpaperService.this);web.setBackgroundColor(Prefs.bg(LiveWebWallpaperService.this));web.setLayerType(View.LAYER_TYPE_HARDWARE,null);
+            WebSettings s=web.getSettings();s.setJavaScriptEnabled(true);s.setDomStorageEnabled(true);s.setLoadsImagesAutomatically(true);s.setMediaPlaybackRequiresUserGesture(true);s.setBuiltInZoomControls(false);s.setDisplayZoomControls(false);s.setSupportZoom(false);
+            web.setVerticalScrollBarEnabled(!Prefs.hideScroll(LiveWebWallpaperService.this));web.setHorizontalScrollBarEnabled(!Prefs.hideScroll(LiveWebWallpaperService.this));web.setOverScrollMode(View.OVER_SCROLL_NEVER);
+            web.setInitialScale((int)(Prefs.zoom(LiveWebWallpaperService.this)*100));web.setWebViewClient(new WebViewClient());web.loadUrl(Prefs.url(LiveWebWallpaperService.this));
+            int w=holder.getSurfaceFrame().width(),he=holder.getSurfaceFrame().height();web.measure(View.MeasureSpec.makeMeasureSpec(w,1073741824),View.MeasureSpec.makeMeasureSpec(he,1073741824));web.layout(0,0,w,he);
         }
-        void drawOverlay(){
-            Canvas c=null; try{
-                c=holder.lockCanvas(); if(c==null)return;
-                c.drawColor(Prefs.bg(LiveWallpaperService.this));
-                int mode=Prefs.mode(LiveWallpaperService.this);
-                if(mode==0 && web!=null) web.draw(c);
-                else if(mode==1) drawMatrix(c);
-                else drawCode(c);
-                if(Prefs.dim(LiveWallpaperService.this)>0){
-                    int a=(int)(Prefs.dim(LiveWallpaperService.this)*255/100f);
-                    c.drawColor(Color.argb(a,0,0,0));
-                }
-            }finally{if(c!=null)holder.unlockCanvasAndPost(c);}
-        }
-        void drawMatrix(Canvas c){
-            Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);p.setTypeface(Typeface.MONOSPACE);p.setTextSize(28);p.setColor(Color.rgb(0,255,80));
-            int w=c.getWidth(),he=c.getHeight(),t=(int)(SystemClock.uptimeMillis()/70);
-            for(int x=12;x<w;x+=32)for(int y=((x*7+t)%he)-he;y<he;y+=32)c.drawText(String.valueOf((x+y+t)%2),x,y,p);
-        }
-        void drawCode(Canvas c){
-            Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);p.setTypeface(Typeface.MONOSPACE);p.setTextSize(18);p.setColor(Color.rgb(120,255,160));
-            String[] lines={"// LIVE CODE","while (true) {","  renderWallpaper();","  saveBattery();","  if (visible)","    update();","}"};
-            int y=45,shift=(int)((SystemClock.uptimeMillis()/900)%20);
-            for(String s:lines){c.drawText(s,20,y+shift,p);y+=30;}
-        }
+        Typeface font(int id){if(id==1)return Typeface.SANS_SERIF;if(id==2)return Typeface.SERIF;return Typeface.MONOSPACE;}
+        void drawFrame(){Canvas c=null;try{c=holder.lockCanvas();if(c==null)return;c.drawColor(Prefs.bg(LiveWebWallpaperService.this));int m=Prefs.mode(LiveWebWallpaperService.this);if(m==0&&web!=null)web.draw(c);else if(m==1)matrix(c);else code(c);int d=Prefs.dim(LiveWebWallpaperService.this);if(d>0)c.drawColor(Color.argb(d*255/100,0,0,0));}finally{if(c!=null)holder.unlockCanvasAndPost(c);}}
+        void matrix(Canvas c){Paint p=new Paint(1);p.setColor(Color.rgb(0,255,90));p.setTypeface(font(Prefs.matrixFont(LiveWebWallpaperService.this)));p.setTextSize(Prefs.matrixFont(LiveWebWallpaperService.this)==3?20:28);int w=c.getWidth(),he=c.getHeight();long step=Math.max(45,720-Prefs.matrixSpeed(LiveWebWallpaperService.this)*6L);int off=(int)((SystemClock.uptimeMillis()/step)%64);for(int x=8;x<w;x+=32){for(int y=-he+off+(x%64);y<he;y+=32)c.drawText(((x+y+off)&1)==0?"0":"1",x,y,p);}}
+        void code(Canvas c){Paint p=new Paint(1);p.setColor(Color.rgb(120,255,170));p.setTypeface(font(Prefs.codeFont(LiveWebWallpaperService.this)));p.setTextSize(Prefs.codeFont(LiveWebWallpaperService.this)==3?16:20);String[] lines={"// LIVE CODE","class Wallpaper {","  void render() {","    saveBattery();","    updateDisplay();","  }","}"};long step=Math.max(80,1100-Prefs.codeSpeed(LiveWebWallpaperService.this)*9L);int shift=(int)((SystemClock.uptimeMillis()/step)%36),y=45;for(String s:lines){c.drawText(s,20,y+shift,p);y+=31;}}
     }
 }
