@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="fa" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Live Terminal</title>
+
+  <style>
+    :root {
+      --green: #00ff66;
+      --yellow: #ffe600;
+      --red: #ff3030;
+      --blue: #249dff;
+      --cyan: #00eaff;
+      --white: #eafff0;
+      --bg: #010503;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: var(--bg);
+    }
+
+    body {
+      color: var(--green);
+      font-family: Consolas, "Courier New", monospace;
+      font-size: clamp(13px, 1.35vw, 18px);
+    }
+
+    #terminal {
+      width: 100vw;
+      height: 100vh;
+      padding: 22px 30px;
+      overflow-y: auto;
+      background:
+        radial-gradient(
+          ellipse at center,
+          rgba(0, 100, 35, 0.18),
+          rgba(0, 0, 0, 0.98) 80%
+        ),
+        var(--bg);
+      text-shadow: 0 0 5px currentColor;
+    }
+
+    /* خطوط اسکن صفحه */
+    #terminal::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.025) 0,
+        rgba(255, 255, 255, 0.025) 1px,
+        transparent 1px,
+        transparent 4px
+      );
+    }
+
+    .line {
+      min-height: 1.65em;
+      white-space: pre-wrap;
+      word-break: break-word;
+      animation: showLine 0.1s ease-out;
+    }
+
+    @keyframes showLine {
+      from {
+        opacity: 0;
+        transform: translateX(-7px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .green {
+      color: var(--green);
+    }
+
+    .yellow {
+      color: var(--yellow);
+    }
+
+    .red {
+      color: var(--red);
+    }
+
+    .blue {
+      color: var(--blue);
+    }
+
+    .cyan {
+      color: var(--cyan);
+    }
+
+    .white {
+      color: var(--white);
+    }
+
+    .muted {
+      color: #568269;
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 0.6em;
+      height: 1em;
+      margin-left: 5px;
+      vertical-align: -0.12em;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: blink 0.65s infinite;
+    }
+
+    @keyframes blink {
+      50% {
+        opacity: 0;
+      }
+    }
+
+    ::-webkit-scrollbar {
+      width: 7px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #010503;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #075d2d;
+      border-radius: 10px;
+    }
+
+    ::selection {
+      color: #001b0a;
+      background: var(--green);
+    }
+  </style>
+</head>
+
+<body>
+  <div id="terminal"></div>
+
+  <script>
+    const terminal = document.getElementById("terminal");
+
+    const messages = [
+      ["green", "[ OK ] System process completed successfully"],
+      ["blue", "[INFO] Reading system configuration..."],
+      ["cyan", "[NET ] Incoming connection detected"],
+      ["green", "[ OK ] Connection accepted"],
+      ["yellow", "[WARN] High CPU usage detected"],
+      ["blue", "[INFO] Optimizing running processes..."],
+      ["green", "[ OK ] Process optimization completed"],
+      ["red", "[FAIL] Temporary access denied"],
+      ["yellow", "[WARN] Retrying authentication..."],
+      ["green", "[ OK ] Authentication successful"],
+      ["cyan", "[NET ] Uploading encrypted data..."],
+      ["green", "[ OK ] Data uploaded successfully"],
+      ["blue", "[INFO] Checking server response..."],
+      ["green", "[ OK ] Server response: 200"],
+      ["yellow", "[WARN] New update available"],
+      ["blue", "[INFO] Downloading update package..."],
+      ["green", "[ OK ] Update installed"],
+      ["cyan", "[NET ] Scanning network ports..."],
+      ["green", "[ OK ] Port 443 is open"],
+      ["green", "[ OK ] Port 80 is open"],
+      ["red", "[FAIL] Port 22 connection timeout"],
+      ["yellow", "[WARN] Firewall rule applied"],
+      ["blue", "[INFO] Restarting service..."],
+      ["green", "[ OK ] Service restarted successfully"]
+    ];
+
+    const commands = [
+      "sudo systemctl status cyber-core",
+      "network scan --active",
+      "deploy --production",
+      "monitor --realtime",
+      "sync --secure",
+      "diagnostic --full"
+    ];
+
+    let messageIndex = 0;
+    let commandIndex = 0;
+
+    const sleep = (ms) =>
+      new Promise(resolve => setTimeout(resolve, ms));
+
+    function scrollToBottom() {
+      terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    function createLine() {
+      const line = document.createElement("div");
+      line.className = "line";
+      terminal.appendChild(line);
+      scrollToBottom();
+      return line;
+    }
+
+    async function typeText(element, text, speed = 34) {
+      for (const char of text) {
+        element.textContent += char;
+        scrollToBottom();
+        await sleep(speed);
+      }
+    }
+
+    async function typeCommand(command) {
+      const line = createLine();
+
+      const prefix = document.createElement("span");
+      prefix.innerHTML = `
+        <span class="blue">guest@terminal</span>
+        <span class="muted">:</span>
+        <span class="cyan">~</span>
+        <span class="green">$ </span>
+      `;
+
+      const commandText = document.createElement("span");
+      commandText.className = "white";
+
+      const cursor = document.createElement("span");
+      cursor.className = "cursor";
+
+      line.appendChild(prefix);
+      line.appendChild(commandText);
+      line.appendChild(cursor);
+
+      await typeText(commandText, command, 38);
+
+      cursor.remove();
+      await sleep(350);
+    }
+
+    async function typeMessage(color, text) {
+      const line = createLine();
+
+      const prefix = document.createElement("span");
+      prefix.innerHTML = `
+        <span class="blue">guest@terminal</span>
+        <span class="muted">:</span>
+        <span class="cyan">~</span>
+        <span class="green">$ </span>
+      `;
+
+      const messageText = document.createElement("span");
+      messageText.className = color;
+
+      const cursor = document.createElement("span");
+      cursor.className = "cursor";
+
+      line.appendChild(prefix);
+      line.appendChild(messageText);
+      line.appendChild(cursor);
+
+      await typeText(messageText, text, 30);
+
+      cursor.remove();
+      await sleep(170);
+    }
+
+    async function startTerminal() {
+      while (true) {
+        await typeCommand(commands[commandIndex]);
+        commandIndex = (commandIndex + 1) % commands.length;
+
+        for (let i = 0; i < 4; i++) {
+          const [color, message] = messages[messageIndex];
+
+          await typeMessage(color, message);
+          messageIndex = (messageIndex + 1) % messages.length;
+        }
+
+        await sleep(250);
+      }
+    }
+
+    terminal.innerHTML = `
+      <div class="line">
+        <span class="green">
+╔════════════════════════════════════════════════════════════╗
+        </span>
+      </div>
+
+      <div class="line">
+        <span class="green">║ </span>
+        <span class="cyan">LIVE TERMINAL STREAM INITIALIZED</span>
+        <span class="green"> ║</span>
+      </div>
+
+      <div class="line">
+        <span class="green">
+╚════════════════════════════════════════════════════════════╝
+        </span>
+      </div>
+    `;
+
+    startTerminal();
+  </script>
+</body>
+</html>

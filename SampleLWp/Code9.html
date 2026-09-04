@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Java Terminal</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      overflow: hidden;
+      background: #050505;
+      color: #ddd;
+      font-family: Consolas, Monaco, "Courier New", monospace;
+    }
+
+    .terminal {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background:
+        radial-gradient(circle at center, #132113 0%, #050505 75%);
+    }
+
+    .header {
+      height: 42px;
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 15px;
+      direction: ltr;
+      background: #1b1b1b;
+      border-bottom: 1px solid #333;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+    }
+
+    .dot {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+    }
+
+    .red {
+      background: #ff5f56;
+    }
+
+    .yellow {
+      background: #ffbd2e;
+    }
+
+    .green {
+      background: #27c93f;
+    }
+
+    .title {
+      margin-left: 10px;
+      color: #999;
+      font-size: 13px;
+    }
+
+    #terminal {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: auto;
+      padding: 20px;
+      direction: ltr;
+      text-align: left;
+      white-space: pre;
+      font-size: clamp(13px, 2vw, 17px);
+      line-height: 1.7;
+      scroll-behavior: smooth;
+      scrollbar-width: thin;
+      scrollbar-color: #35e66b #101010;
+    }
+
+    #terminal::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    #terminal::-webkit-scrollbar-track {
+      background: #101010;
+    }
+
+    #terminal::-webkit-scrollbar-thumb {
+      background: #35e66b;
+      border-radius: 10px;
+    }
+
+    .line {
+      min-height: 1.7em;
+    }
+
+    .prompt {
+      color: #35e66b;
+    }
+
+    .java {
+      color: #ffe66d;
+    }
+
+    .keyword {
+      color: #ff6b6b;
+    }
+
+    .string {
+      color: #7ee787;
+    }
+
+    .comment {
+      color: #777;
+    }
+
+    .info {
+      color: #55bfff;
+    }
+
+    .success {
+      color: #35e66b;
+    }
+
+    .warning {
+      color: #ffd43b;
+    }
+
+    .text {
+      white-space: pre;
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 9px;
+      height: 1.1em;
+      margin-left: 4px;
+      vertical-align: middle;
+      background: #35e66b;
+      box-shadow: 0 0 6px #35e66b;
+      animation: blink 0.55s steps(1) infinite;
+    }
+
+    @keyframes blink {
+      0%,
+      50% {
+        opacity: 1;
+      }
+
+      51%,
+      100% {
+        opacity: 0;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .header {
+        height: 38px;
+        min-height: 38px;
+        padding: 0 10px;
+      }
+
+      .dot {
+        width: 11px;
+        height: 11px;
+      }
+
+      .title {
+        font-size: 11px;
+      }
+
+      #terminal {
+        padding: 14px 10px;
+        font-size: 12px;
+        line-height: 1.75;
+      }
+
+      .cursor {
+        width: 7px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="terminal">
+    <div class="header">
+      <span class="dot red"></span>
+      <span class="dot yellow"></span>
+      <span class="dot green"></span>
+      <span class="title">Java Development Terminal</span>
+    </div>
+
+    <div id="terminal"></div>
+  </div>
+
+  <script>
+    const terminal = document.getElementById("terminal");
+
+    const javaCode = `
+package com.example.application;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class Main {
+
+    private static final String APP_NAME = "Secure Java System";
+    private static final int MAX_USERS = 1000;
+
+    public static void main(String[] args) {
+
+        System.out.println("Starting application...");
+        System.out.println("Loading configuration...");
+        System.out.println("Initializing services...");
+
+        Database database = new Database();
+        UserService userService = new UserService(database);
+        Authentication authentication = new Authentication();
+
+        boolean connected = database.connect();
+
+        if (connected) {
+            System.out.println("Database connection established");
+        } else {
+            System.out.println("Database connection failed");
+            return;
+        }
+
+        List<User> users = new ArrayList<>();
+
+        for (int i = 1; i <= 15; i++) {
+            String username = "user_" + i;
+            String email = username + "@example.com";
+
+            User user = new User(username, email);
+            users.add(user);
+            userService.save(user);
+
+            System.out.println(
+                "User created successfully: " + username
+            );
+        }
+
+        AuthenticationResult result =
+                authentication.login("admin", "password");
+
+        if (result.isSuccessful()) {
+            System.out.println("Login successful");
+            System.out.println("Access level: ADMIN");
+        } else {
+            System.out.println("Login failed");
+        }
+
+        List<String> permissions = new ArrayList<>();
+
+        permissions.add("READ");
+        permissions.add("WRITE");
+        permissions.add("DELETE");
+        permissions.add("EXECUTE");
+        permissions.add("ADMIN");
+
+        for (String permission : permissions) {
+            System.out.println(
+                "Permission loaded: " + permission
+            );
+        }
+
+        System.out.println("Checking system resources...");
+
+        Runtime runtime = Runtime.getRuntime();
+        long totalMemory = runtime.totalMemory();
+        long freeMemory = runtime.freeMemory();
+
+        System.out.println(
+            "Total memory: " + totalMemory
+        );
+
+        System.out.println(
+            "Free memory: " + freeMemory
+        );
+
+        for (int packet = 0; packet < 30; packet++) {
+            System.out.println(
+                "Processing data packet " + packet + "..."
+            );
+        }
+
+        SecurityService securityService =
+                new SecurityService();
+
+        securityService.enableEncryption();
+        securityService.validateConnection();
+        securityService.startFirewall();
+
+        ApplicationConfig config =
+                new ApplicationConfig();
+
+        config.setApplicationName(APP_NAME);
+        config.setMaximumUsers(MAX_USERS);
+        config.setDebugMode(false);
+
+        System.out.println(
+            "Application name: "
+            + config.getApplicationName()
+        );
+
+        System.out.println(
+            "Maximum users: "
+            + config.getMaximumUsers()
+        );
+
+        for (int check = 1; check <= 12; check++) {
+            System.out.println(
+                "System check " + check + " completed"
+            );
+        }
+
+        System.out.println("All services are running");
+        System.out.println("Security protocol enabled");
+        System.out.println("Application started successfully");
+    }
+
+    static class Database {
+
+        public boolean connect() {
+            System.out.println(
+                "Connecting to database..."
+            );
+
+            return true;
+        }
+
+        public void disconnect() {
+            System.out.println(
+                "Database connection closed"
+            );
+        }
+    }
+
+    static class UserService {
+
+        private final Database database;
+
+        public UserService(Database database) {
+            this.database = database;
+        }
+
+        public void save(User user) {
+            System.out.println(
+                "Saving user: "
+                + user.getUsername()
+            );
+        }
+    }
+
+    static class Authentication {
+
+        public AuthenticationResult login(
+                String username,
+                String password
+        ) {
+            if (username.equals("admin")
+                    && password.equals("password")) {
+
+                return new AuthenticationResult(true);
+            }
+
+            return new AuthenticationResult(false);
+        }
+    }
+
+    static class AuthenticationResult {
+
+        private final boolean successful;
+
+        public AuthenticationResult(boolean successful) {
+            this.successful = successful;
+        }
+
+        public boolean isSuccessful() {
+            return successful;
+        }
+    }
+
+    static class SecurityService {
+
+        public void enableEncryption() {
+            System.out.println(
+                "Encryption service enabled"
+            );
+        }
+
+        public void validateConnection() {
+            System.out.println(
+                "Connection validation completed"
+            );
+        }
+
+        public void startFirewall() {
+            System.out.println(
+                "Firewall service started"
+            );
+        }
+    }
+
+    static class ApplicationConfig {
+
+        private String applicationName;
+        private int maximumUsers;
+        private boolean debugMode;
+
+        public void setApplicationName(String name) {
+            this.applicationName = name;
+        }
+
+        public String getApplicationName() {
+            return applicationName;
+        }
+
+        public void setMaximumUsers(int users) {
+            this.maximumUsers = users;
+        }
+
+        public int getMaximumUsers() {
+            return maximumUsers;
+        }
+
+        public void setDebugMode(boolean debugMode) {
+            this.debugMode = debugMode;
+        }
+
+        public boolean isDebugMode() {
+            return debugMode;
+        }
+    }
+
+    static class User {
+
+        private final String username;
+        private final String email;
+
+        public User(String username, String email) {
+            this.username = username;
+            this.email = email;
+        }
+
+        public String getUsername() {
+            return username;
+        }
+
+        public String getEmail() {
+            return email;
+        }
+    }
+}
+`;
+
+    const lines = [
+      {
+        type: "prompt",
+        text: "user@system:~$ "
+      },
+      {
+        type: "java",
+        text: "javac Main.java"
+      },
+      {
+        type: "success",
+        text: "[OK] Compilation completed successfully"
+      },
+      {
+        type: "prompt",
+        text: "user@system:~$ "
+      },
+      {
+        type: "java",
+        text: "java Main"
+      },
+      {
+        type: "comment",
+        text: "// Java application is starting..."
+      },
+      ...javaCode
+        .trim()
+        .split("\n")
+        .map(line => ({
+          type: getLineType(line),
+          text: line
+        })),
+      {
+        type: "success",
+        text: "[OK] Process completed successfully"
+      },
+      {
+        type: "prompt",
+        text: "user@system:~$ "
+      },
+      {
+        type: "warning",
+        text: "Waiting for next command..."
+      }
+    ];
+
+    function getLineType(line) {
+      const text = line.trim();
+
+      if (text.startsWith("//")) {
+        return "comment";
+      }
+
+      if (text.includes("System.out")) {
+        return "java";
+      }
+
+      if (text.includes('"')) {
+        return "string";
+      }
+
+      if (
+        text.includes("public") ||
+        text.includes("private") ||
+        text.includes("static") ||
+        text.includes("class") ||
+        text.includes("return") ||
+        text.includes("if") ||
+        text.includes("else") ||
+        text.includes("for")
+      ) {
+        return "keyword";
+      }
+
+      return "java";
+    }
+
+    let lineIndex = 0;
+    let charIndex = 0;
+
+    // سرعت تایپ طبیعی
+    const minTypingSpeed = 10;
+    const maxTypingSpeed = 38;
+
+    const minLineDelay = 120;
+    const maxLineDelay = 320;
+
+    function randomNumber(min, max) {
+      return Math.floor(
+        Math.random() * (max - min + 1)
+      ) + min;
+    }
+
+    function getTypingDelay(character) {
+      let delay = randomNumber(
+        minTypingSpeed,
+        maxTypingSpeed
+      );
+
+      // مکث طبیعی بعد از علائم
+      if (character === ".") {
+        delay += randomNumber(180, 400);
+      }
+
+      if (character === ",") {
+        delay += randomNumber(80, 220);
+      }
+
+      if (character === ";" || character === ":") {
+        delay += randomNumber(100, 250);
+      }
+
+      if (character === "{" || character === "}") {
+        delay += randomNumber(70, 170);
+      }
+
+      // مکث کوتاه و تصادفی
+      if (Math.random() < 0.025) {
+        delay += randomNumber(250, 700);
+      }
+
+      return delay;
+    }
+
+    function scrollToBottom() {
+      terminal.scrollTo({
+        top: terminal.scrollHeight,
+        behavior: "smooth"
+      });
+    }
+
+    function createLine(type) {
+      const line = document.createElement("div");
+      line.className = `line ${type}`;
+
+      const text = document.createElement("span");
+      text.className = "text";
+
+      const cursor = document.createElement("span");
+      cursor.className = "cursor";
+
+      line.appendChild(text);
+      line.appendChild(cursor);
+      terminal.appendChild(line);
+
+      return {
+        line,
+        text,
+        cursor
+      };
+    }
+
+    function typeText() {
+      if (lineIndex >= lines.length) {
+        return;
+      }
+
+      const currentLine = lines[lineIndex];
+
+      const elements = createLine(currentLine.type);
+      const textElement = elements.text;
+
+      function typeCharacter() {
+        if (charIndex >= currentLine.text.length) {
+          elements.cursor.remove();
+
+          charIndex = 0;
+          lineIndex++;
+
+          setTimeout(
+            typeText,
+            randomNumber(minLineDelay, maxLineDelay)
+          );
+
+          return;
+        }
+
+        const character = currentLine.text.charAt(charIndex);
+
+        textElement.textContent += character;
+        charIndex++;
+
+        scrollToBottom();
+
+        setTimeout(
+          typeCharacter,
+          getTypingDelay(character)
+        );
+      }
+
+      typeCharacter();
+    }
+
+    function restartTyping() {
+      terminal.innerHTML = "";
+      lineIndex = 0;
+      charIndex = 0;
+      typeText();
+    }
+
+    // شروع اجرای تایپ
+    typeText();
+
+    // با کلیک روی صفحه، انیمیشن از اول اجرا می‌شود
+    document.addEventListener("click", restartTyping);
+  </script>
+
+</body>
+</html>
