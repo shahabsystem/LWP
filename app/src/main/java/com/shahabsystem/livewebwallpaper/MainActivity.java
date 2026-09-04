@@ -55,8 +55,7 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.VERTICAL);l.setPadding(24,8,24,8);l.addView(tv("اگر برنامه برای شما مفید است، حمایت شما به ادامه توسعه کمک می‌کند.",15));
         Button c=new Button(this);c.setText("☕ CoffeeBede");l.addView(c);c.setOnClickListener(v->open("https://coffeebede.com/shahabsystem"));
         Button r=new Button(this);r.setText("Reymit");l.addView(r);r.setOnClickListener(v->open("https://reymit.ir/shahabsystem"));
-        l.addView(tv("✉ hamedmohammadinikche@gmail.com
-GitHub: github.com/shahabsystem",14));
+        l.addView(tv("✉ hamedmohammadinikche@gmail.com\nGitHub: github.com/shahabsystem",14));
         new AlertDialog.Builder(this).setTitle("حمایت از توسعه‌دهنده").setView(l).setPositiveButton("بازگشت",null).show();
     }
 }
