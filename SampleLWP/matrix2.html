@@ -1,0 +1,88 @@
+﻿<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Matrix Rain</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      overflow: hidden;
+      background: #000;
+    }
+
+    #matrix {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: #000;
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="matrix"></canvas>
+
+  <script>
+    const canvas = document.getElementById("matrix");
+    const ctx = canvas.getContext("2d");
+
+    let width;
+    let height;
+    let columns;
+    let drops;
+
+    const characters =
+      "アァカサタナハマヤャラワガザダバパ" +
+      "01";
+
+    function resizeCanvas() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+
+      columns = Math.floor(width / 17);
+      drops = Array(columns).fill(1);
+    }
+
+    function drawMatrix() {
+      // ایجاد رد محو پشت حروف
+      ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.font = "16px monospace";
+
+      for (let i = 0; i < drops.length; i++) {
+        const character =
+          characters[Math.floor(Math.random() * characters.length)];
+
+        // رنگ اصلی سبز ماتریکس
+        ctx.fillStyle = "#00ff66";
+        ctx.fillText(character, i * 17, drops[i] * 17);
+
+        // شروع مجدد بارش از بالای صفحه
+        if (drops[i] * 17 > height && Math.random() > 0.975) {
+          drops[i] = 0;
+        }
+
+        drops[i]++;
+      }
+    }
+
+    resizeCanvas();
+
+    // سرعت اجرای انیمیشن
+    setInterval(drawMatrix, 45);
+
+    window.addEventListener("resize", resizeCanvas);
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,238 @@
+﻿<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #020504;
+    }
+
+    #matrix {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      width: 100%;
+      height: 100%;
+      opacity: .78;
+    }
+
+    /* هالهٔ سبز بسیار کم‌رنگ */
+    .matrix-glow {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background:
+        radial-gradient(
+          ellipse at center,
+          rgba(0, 255, 90, .065) 0%,
+          rgba(0, 255, 90, .025) 34%,
+          transparent 75%
+        );
+    }
+
+    /* خطوط اسکن */
+    .matrix-scanlines {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      opacity: .18;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent 3px,
+        rgba(125, 255, 160, .08) 4px,
+        transparent 5px
+      );
+    }
+
+    /* تیرگی اطراف صفحه */
+    .matrix-vignette {
+      position: fixed;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      box-shadow:
+        inset 0 0 90px rgba(0, 0, 0, .9),
+        inset 0 0 220px rgba(0, 0, 0, .65);
+    }
+
+    /* محتوای سایت  */
+    .page-content {
+      position: relative;
+      z-index: 5;
+    }
+  </style>
+</head>
+
+<body>
+
+  <canvas id="matrix"></canvas>
+
+  <div class="matrix-glow"></div>
+  <div class="matrix-scanlines"></div>
+  <div class="matrix-vignette"></div>
+
+  -->
+
+  <script>
+    const canvas = document.getElementById("matrix");
+    const ctx = canvas.getContext("2d");
+
+    let W;
+    let H;
+    let dpr;
+    let columns;
+    let streams = [];
+
+    const fontSize = 15;
+
+    const symbols =
+      "アァカサタナハマヤャラワガザダバパ" +
+      "HMN" +
+      "0123456789";
+
+    function randomNumber(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    function randomSymbol() {
+      return symbols[Math.floor(Math.random() * symbols.length)];
+    }
+
+    function makeStream(x) {
+      const length = Math.floor(randomNumber(12, 31));
+
+      return {
+        x,
+        y: randomNumber(-H, H),
+        speed: randomNumber(.42, 1.25),
+        length,
+        opacity: randomNumber(.16, .52),
+        delay: Math.floor(randomNumber(0, 100)),
+        chars: Array.from(
+          { length },
+          () => randomSymbol()
+        )
+      };
+    }
+
+    function resizeCanvas() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+      W = window.innerWidth;
+      H = window.innerHeight;
+
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      canvas.style.width = W + "px";
+      canvas.style.height = H + "px";
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      columns = Math.ceil(W / fontSize);
+      streams = [];
+
+      /*
+        فاصلهٔ بیشتر بین ستون‌ها باعث می‌شود افکت
+        مثل نسخهٔ اصلی شلوغ و زننده نشود.
+      */
+      for (let i = 0; i < columns; i++) {
+        if (Math.random() > .25) {
+          streams.push(makeStream(i * fontSize));
+        }
+      }
+    }
+
+    function draw() {
+      /*
+        پاک‌کردن تدریجی به‌جای پاک‌کردن کامل،
+        باعث ایجاد رد محو و نرم می‌شود.
+      */
+      ctx.fillStyle = "rgba(2, 5, 4, .105)";
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.font = `${fontSize}px "Courier New", monospace`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+
+      streams.forEach((stream) => {
+        if (stream.delay > 0) {
+          stream.delay--;
+          return;
+        }
+
+        stream.y += stream.speed;
+
+        for (let i = 0; i < stream.length; i++) {
+          const y = stream.y - i * fontSize;
+
+          if (y < -fontSize || y > H + fontSize) {
+            continue;
+          }
+
+          const fade = 1 - i / stream.length;
+
+          /*
+            سر ستون کمی روشن‌تر از بقیه است،
+            اما سفید و زننده نیست.
+          */
+          if (i === 0) {
+            ctx.fillStyle = `rgba(125, 255, 160, ${stream.opacity * .9})`;
+            ctx.shadowColor = "rgba(0, 255, 90, .35)";
+            ctx.shadowBlur = 5;
+          } else {
+            ctx.fillStyle =
+              `rgba(0, 190, 65, ${stream.opacity * fade * .62})`;
+            ctx.shadowColor = "rgba(0, 255, 80, .22)";
+            ctx.shadowBlur = 2;
+          }
+
+          ctx.fillText(
+            stream.chars[i],
+            stream.x + fontSize / 2,
+            y
+          );
+
+          // تغییر آرام و تصادفی حروف
+          if (Math.random() < .018) {
+            stream.chars[i] = randomSymbol();
+          }
+        }
+
+        ctx.shadowBlur = 0;
+
+        // شروع دوبارهٔ ستون پس از خروج از پایین صفحه
+        if (stream.y - stream.length * fontSize > H) {
+          Object.assign(stream, makeStream(stream.x));
+        }
+      });
+
+      requestAnimationFrame(draw);
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+
+    resizeCanvas();
+
+    // زمینهٔ اولیه
+    ctx.fillStyle = "#020504";
+    ctx.fillRect(0, 0, W, H);
+
+    draw();
+  </script>
+
+</body>
+</html>
