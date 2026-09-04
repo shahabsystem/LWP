@@ -1,4 +1,12 @@
-# LiveWebWallpaper v5.0
+ین نسخه Matrix و Code را مستقیماً با Canvas اندروید اجرا می‌کند؛ بنابراین به WebView/JavaScript برای انیمیشن‌های داخلی وابسته نیست و مشکل «ثابت بودن» نسخه‌های قبلی حذف شده است.
 
-رفع خطای `E cannot be converted to Context` و `self-reference in initializer`.
-تمام دسترسی‌های Prefs داخل Wallpaper Engine از `context()` استفاده می‌کنند تا `this` مربوط به Engine اشتباهاً به عنوان Context ارسال نشود.
+منطق Matrix و Code بر اساس کدهای HTML آپلودشده در گفتگو (ساختار matrixFrame و typeCode) بازطراحی شده است.
+بهبود Web
+
+    WebView با Hardware Layer
+    setOffscreenPreRaster(true) برای رندر روان‌تر
+    invalidate و redraw پیوسته تا صفحات دارای انیمیشن CSS/JS بهتر به‌روز شوند
+    viewport و اندازه WebView دقیقاً با Surface هماهنگ می‌شود
+    ScrollBar قابل خاموش کردن است
+    Zoom قابل تنظیم است
+    WebView فقط در حالت Web ساخته می‌شود تا Matrix/Code سبک بمانند
