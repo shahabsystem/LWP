@@ -1,23 +1,17 @@
-# LiveWebWallpaper v3.0
+# LiveWebWallpaper v4.0
 
-نسخه جدید Live Wallpaper با موتور HTML/CSS/JavaScript برای افکت‌های Matrix و تایپ کد. منطق Matrix و موتور تایپ کد از محتوای HTML آپلودشده در گفتگو استخراج و برای WebView اندروید بازطراحی و برای WebView اندروید سبک‌سازی شده است.
+این نسخه Matrix و Code را مستقیماً با Canvas اندروید اجرا می‌کند؛ بنابراین به WebView/JavaScript برای انیمیشن‌های داخلی وابسته نیست و مشکل «ثابت بودن» نسخه‌های قبلی حذف شده است.
 
-## حالت‌ها
-- Web: باز کردن URL دلخواه به‌عنوان Live Wallpaper
-- Matrix: بارش واقعی کاراکترها با Canvas و requestAnimationFrame
-- Code: پنجره شبیه ادیتور، شماره خطوط، syntax highlighting و تایپ حلقه‌ای
+منطق Matrix و Code بر اساس کدهای HTML آپلودشده در گفتگو (ساختار `matrixFrame` و `typeCode`) بازطراحی شده است.
 
-## تنظیمات
-- Zoom وب
-- کم‌رنگی
-- رنگ پس‌زمینه
-- رنگ Matrix/Code
-- سرعت Matrix
-- فونت Matrix
-- سرعت Code
-- فونت Code
-- مخفی کردن ScrollBar
-- حالت تمام‌سطح Wallpaper
+## بهبود Web
+- WebView با Hardware Layer
+- `setOffscreenPreRaster(true)` برای رندر روان‌تر
+- invalidate و redraw پیوسته تا صفحات دارای انیمیشن CSS/JS بهتر به‌روز شوند
+- viewport و اندازه WebView دقیقاً با Surface هماهنگ می‌شود
+- ScrollBar قابل خاموش کردن است
+- Zoom قابل تنظیم است
+- WebView فقط در حالت Web ساخته می‌شود تا Matrix/Code سبک بمانند
 
-## مصرف باتری
-وقتی Wallpaper از دید سیستم خارج شود، JavaScript با `setWallpaperActive(false)` متوقف می‌شود. در حالت Web نیز انیمیشن داخلی صفحه توسط Wallpaper کنترل نمی‌شود؛ صفحات وب خارجی ممکن است خودشان JavaScript فعال داشته باشند.
+## Build
+`.github/workflows/build.yml` با JDK 17 و Gradle 8.11.1 روی GitHub APK تولید می‌کند.
