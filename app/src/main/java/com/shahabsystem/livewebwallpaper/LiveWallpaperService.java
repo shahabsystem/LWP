@@ -59,7 +59,7 @@ public class LiveWallpaperService extends WallpaperService {
                     return;
                 }
                 drawFrame();
-                handler.postDelayed(this, 16L);
+                handler.postDelayed(this, Math.max(1L, 1000L / Math.max(10, Math.min(60, Prefs.fps(context())))));
             }
         };
 
@@ -323,7 +323,7 @@ public class LiveWallpaperService extends WallpaperService {
             canvas.drawText("UTF-8", left + panelWidth - 55f, top + panelHeight - 14f, paint);
 
             // سرعت تایپ واقعی: بر اساس تنظیم کاربر، نه یک تایمر ثابت.
-            long interval = Math.max(18L, (long) (150L - Prefs.codeSpeed(context()) * 1.3));
+            long interval = Math.max(18L, 150L - (long)(Prefs.codeSpeed(context()) * 1.3));
             long now = SystemClock.uptimeMillis();
             if (now - lastFrameTime >= interval) {
                 lastFrameTime = now;
