@@ -13,32 +13,32 @@ import android.widget.*;
 
 public class MainActivity extends Activity {
     LinearLayout l; EditText url; SeekBar sp,cp,dim,zoom,fps; Spinner mode; CheckBox hs;
-    TextView tv(String s){ TextView t=new TextView(this); t.setText(s); t.setTextSize(15); t.setPadding(0,10,0,5); return t; }
+    TextView tv(String s){ TextView t=new TextView(this); t.setText(s); t.setTextSize(18); t.setTextColor(Color.rgb(235,235,240)); t.setPadding(0,12,0,7); return t; }
     SeekBar bar(int v){ SeekBar s=new SeekBar(this); s.setMax(100); s.setProgress(v); return s; }
     Spinner spin(String[] a){ Spinner s=new Spinner(this); s.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,a)); return s; }
-    Button link(String text,String url){ Button b=new Button(this); b.setText(text); b.setOnClickListener(v->{try{startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));}catch(Exception ignored){}}); return b; }
+    Button link(String text,String url){ Button b=new Button(this); b.setText(text); b.setTextSize(17); b.setOnClickListener(v->{try{startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));}catch(Exception ignored){}}); return b; }
 
     @Override public void onCreate(Bundle b){
         super.onCreate(b);
         l=new LinearLayout(this); l.setOrientation(LinearLayout.VERTICAL); l.setPadding(22,16,22,24);
         ScrollView sv=new ScrollView(this); sv.addView(l); setContentView(sv);
 
-        l.addView(tv("LiveWebWallpaper 6.0"));
-        l.addView(tv("تنظیمات حرفه‌ای Live Wallpaper"));
-        l.addView(tv("حالت نمایش")); mode=spin(new String[]{"Web","Matrix","Code"}); l.addView(mode);
-        l.addView(tv("آدرس Web")); url=new EditText(this); url.setSingleLine(); l.addView(url);
+        TextView title=tv("LiveWebWallpaper 8.0"); title.setTextSize(25); title.setTypeface(null, android.graphics.Typeface.BOLD); l.addView(title);
+        TextView subtitle=tv("تنظیمات حرفه‌ای Live Wallpaper"); subtitle.setTextSize(18); l.addView(subtitle);
+        l.addView(tv("حالت نمایش")); mode=spin(new String[]{"Web","Matrix (HTML پیش‌فرض)","Code (HTML پیش‌فرض)"}); l.addView(mode);
+        l.addView(tv("آدرس Web (فقط در حالت Web)")); url=new EditText(this); url.setSingleLine(); url.setTextSize(18); url.setTextColor(Color.WHITE); url.setHintTextColor(Color.rgb(150,150,155)); l.addView(url);
         l.addView(tv("سرعت Matrix")); sp=bar(Prefs.speed(this)); l.addView(sp);
         l.addView(tv("سرعت تایپ Code")); cp=bar(Prefs.codeSpeed(this)); l.addView(cp);
         l.addView(tv("FPS — نرخ فریم / مصرف باتری")); fps=bar(Math.max(10,Math.min(60,Prefs.fps(this)))*100/60); l.addView(fps);
         l.addView(tv("کم‌رنگی صفحه")); dim=bar(Prefs.dim(this)); l.addView(dim);
         l.addView(tv("Zoom وب")); zoom=bar((int)((Prefs.zoom(this)-.5f)/1.5f*100)); l.addView(zoom);
 
-        Button color=new Button(this); color.setText("انتخاب رنگ پس‌زمینه"); l.addView(color);
+        Button color=new Button(this); color.setText("🎨  انتخاب رنگ پس‌زمینه"); color.setTextSize(17); l.addView(color);
         TextView colorPreview=tv("رنگ فعلی: #"+String.format("%06X",(Prefs.bg(this)&0xFFFFFF))); l.addView(colorPreview);
         color.setOnClickListener(v->showColorDialog(colorPreview));
 
-        hs=new CheckBox(this); hs.setText("عدم نمایش ScrollBar"); hs.setChecked(Prefs.hideScroll(this)); l.addView(hs);
-        Button save=new Button(this); save.setText("اعمال تنظیمات و انتخاب Live Wallpaper"); l.addView(save);
+        hs=new CheckBox(this); hs.setText("عدم نمایش ScrollBar"); hs.setTextSize(18); hs.setTextColor(Color.rgb(235,235,240)); hs.setChecked(Prefs.hideScroll(this)); l.addView(hs);
+        Button save=new Button(this); save.setText("اعمال تنظیمات و انتخاب Live Wallpaper"); save.setTextSize(17); l.addView(save);
         save.setOnClickListener(v->{
             getSharedPreferences("p",0).edit()
                 .putInt("mode",mode.getSelectedItemPosition()).putInt("speed",Math.max(1,sp.getProgress()))
