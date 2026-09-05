@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hamed typer</title>
+    <style>
+        body {
+            background-color: #0d1117; /* Ñä ÊŞÑíÈÇğ ÓÑãåÇí/ãÔ˜í ãÏÑä */
+            color: #00ff41; /* Ñä ÓÈÒ äÆæäí ˜áÇÓí˜ (ãíÊæÇäíÏ Èå #c9d1d9 ÈÑÇí Ñä ÓİíÏ/ØæÓí ÊÛííÑ ÏåíÏ) */
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            margin: 0;
+            padding: 30px;
+            overflow: hidden;
+            line-height: 1.5;
+        }
+        
+        #terminal {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        /* ÓÇÎÊ Çİ˜Ê Ôã˜Òä ÈÑÇí äÔÇäÑ ÊÇí (Cursor) */
+        #terminal::after {
+            content: '-';
+            animation: blink 1s step-end infinite;
+            color: #00ff41;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="terminal"></div>
+
+    <script>
+        // ˜ÏåÇíí ˜å ãíÎæÇåíÏ ÊÇí ÔæäÏ ÑÇ ÇíäÌÇ ŞÑÇÑ ÏåíÏ (ãíÊæÇäíÏ ˜Ï ÏáÎæÇå ÎæÏÊÇä ÑÇ ÌÇíÒíä ˜äíÏ)
+        const sourceCode = `#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+
+using namespace std;
+
+class NeuralNetwork {
+private:
+    int layers;
+    vector<double> weights;
+    vector<double> biases;
+
+    double sigmoid(double x) {
+        return 1.0 / (1.0 + exp(-x));
+    }
+
+    void initializeWeights() {
+        for (int i = 0; i < layers; ++i) {
+            weights.push_back(rand() / double(RAND_MAX));
+            biases.push_back(0.0);
+        }
+    }
+
+public:
+    NeuralNetwork(int l) : layers(l) {
+        initializeWeights();
+        cout << "[*] Network initialized with " << layers << " layers." << endl;
+    }
+
+    void train(const vector<double>& inputs, const vector<double>& targets) {
+        // Forward pass
+        vector<double> activations = inputs;
+        for (int i = 0; i < layers; ++i) {
+            double z = weights[i] * activations.back() + biases[i];
+            activations.push_back(sigmoid(z));
+        }
+        
+        // Backpropagation logic here...
+        cout << "[+] Training epoch completed. Loss: 0.0042" << endl;
+    }
+};
+
+int main() {
+    NeuralNetwork ai(4);
+    vector<double> data = {0.5, 0.8, 0.2, 0.9};
+    
+    while(true) {
+        ai.train(data, data);
+    }
+    
+    return 0;
+}`;
+
+        // Ê˜ÑÇÑ ˜Ï ÈÑÇí Çíä˜å ÕİÍå Ñ ÔæÏ
+        const fullCode = (sourceCode + '\n\n').repeat(15); 
+        
+        const terminal = document.getElementById('terminal');
+        let charIndex = 0;
+        
+        // ÓÑÚÊ ÊÇí (ÚÏÏ ˜ãÊÑ = ÊÇí ÓÑíÚÊÑ)
+        const typingSpeed = 25; 
+
+        function typeWriter() {
+            if (charIndex < fullCode.length) {
+                // åÑ ÈÇÑ 1 ÊÇ 3 ˜ÇÑÇ˜ÊÑ ÇÖÇİå ãí˜äÏ ÊÇ ÍÓ ÊÇí æÇŞÚíÊÑ ÔæÏ
+                const charsToAdd = Math.floor(Math.random() * 3) + 1 + 0.5; 
+                const chunk = fullCode.substring(charIndex, charIndex + charsToAdd);
+                
+                terminal.textContent += chunk;
+                charIndex += charsToAdd;
+
+                // ÇÓ˜Ñæá ÎæÏ˜ÇÑ Èå Çííä æŞÊí ÕİÍå Ñ ãíÔæÏ
+                window.scrollTo(0, document.body.scrollHeight);
+            } else {
+                // æŞÊí ˜Ï ÊãÇã ÔÏ¡ ÕİÍå Ç˜ ÔÏå æ ÏæÈÇÑå ÇÒ Çæá ÔÑæÚ ãíÔæÏ
+                charIndex = 0;
+                terminal.textContent = '';
+            }
+        }
+
+        setInterval(typeWriter, typingSpeed);
+    </script>
+</body>
+</html>
